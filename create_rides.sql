@@ -1,0 +1,7 @@
+CREATE TABLE rides(
+    rideID INTEGER NOT NULL PRIMARY KEY
+    riderID INTEGER NOT NULL
+    driverID INTEGER NOT NULL
+    pickUpLocation VARCHAR(30) NOT NULL
+    dropOffLocation VARCHAR(30) NOT NULL
+);
