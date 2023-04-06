@@ -28,10 +28,9 @@ def startScreen():
                 else:
                     break
             # user status:
-            # 0. Not found in
+            # 0. Not found in database
             # 1. Rider
             # 2. Driver
-            #TODO OPTIMIZE THIS USING THE get_driverID and get_riderID functions
             if userID in get_riderIDs():
                 user_status = 1
                 break
@@ -78,8 +77,8 @@ def create_new_user():
         db_ops.commit()
         
     else:
-        driverID = input('What is your new driver ID? (integer) \n')
         while True:
+            driverID = input('What is your new driver ID? (integer) \n')
             try:
                 driverID = int(driverID)       
             except ValueError:
@@ -88,6 +87,7 @@ def create_new_user():
             else:
                 if (driverID in get_riderIDs() or driverID in get_driverIDs()):
                     print("This ID number is already used by another user. Try again.")
+                    continue
                 break
         query = '''
         INSERT INTO drivers VALUES(
@@ -182,16 +182,6 @@ def getDriverRating(driverID):
 
     print("Driver #", driverID, " has a rating of: ", rating)
 
-# gets information of all rides given by particular dID
-def view_rides_rider(riderID):
-    query = '''
-    SELECT *
-    FROM rides
-    WHERE riderID = %s;
-    '''
-    values = [riderID]
-    results = db_ops.name_placeholder_query(query,values)
-    helper.pretty_print_rides(results)
 
 def rate_latest_driver(riderID):
     query = '''
@@ -200,6 +190,11 @@ def rate_latest_driver(riderID):
             WHERE riderID = %s
             '''
     latest_ride_id = db_ops.name_placeholder_query(query, [riderID])[0][0]
+    if (latest_ride_id == None):
+        print('No rides found for this user.')
+        return
+
+    print('Latest_ride_id: ', latest_ride_id)
     while(True):
         query = '''
         SELECT *
@@ -282,7 +277,10 @@ def find_driver(riderID):
     %s, %s, %s, %s, %s
     );
     '''
-    new_ride_id = get_latest_rideID() + 1
+    last_ride_id = get_latest_rideID()
+    if (last_ride_id == None):
+        last_ride_id = 0
+    new_ride_id = last_ride_id + 1
     values = [new_ride_id, riderID, active_driver_id, pickup_loc, dropoff_loc]
     db_ops.name_placeholder_query(query, values)
     db_ops.commit()
@@ -310,6 +308,22 @@ def get_driver_rating(driverID):
                     break
         else:
             return results[0][0]
+
+# gets information of all rides given by particular dID
+def view_rides_rider(riderID):
+    query = '''
+    SELECT *
+    FROM rides
+    WHERE riderID = %s;
+    '''
+    values = [riderID]
+    results = db_ops.name_placeholder_query(query,values)
+    if (len(results) == 0):
+        print('No rides found for this user')
+    else:
+        helper.pretty_print_rides(results)
+
+
 def view_rides_driver(driverID):
     query = '''
     SELECT *
@@ -318,7 +332,10 @@ def view_rides_driver(driverID):
     '''
     values = [driverID]
     results = db_ops.name_placeholder_query(query,values)
-    helper.pretty_print_rides(results)
+    if (len(results) == 0):
+        print('No rides found for this user.')
+    else:
+        helper.pretty_print_rides(results)
 
 # returns list of driverIDs that are currently active
 def get_active_drivers():
@@ -339,7 +356,6 @@ def update_driver_status(driverID, newStatus):
     values = [newStatus, driverID]
     db_ops.name_placeholder_query(query, values)
     db_ops.commit()
-
 
 def is_empty():
     num_empty = 0

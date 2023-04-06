@@ -11,7 +11,6 @@ class db_operations():
             auth_plugin='msql_native_password',
             database="RideShare")
         self.cursor = self.connection.cursor()
-        print(self.connection)
 
     #creates table songs in our database
     def create_riders_table(self):
