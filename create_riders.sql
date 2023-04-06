@@ -1,3 +1,0 @@
-CREATE TABLE riders (
-    riderID INTEGER NOT NULL PRIMARY KEY
-);
