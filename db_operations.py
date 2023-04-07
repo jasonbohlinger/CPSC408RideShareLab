@@ -7,7 +7,7 @@ class db_operations():
         # SET THIS PASSWORD BACK TO cpsc408 WHEN YOU'RE DONE
         self.connection = mysql.connector.connect(host="localhost",
             user="root",
-            password="Mustang21!",
+            password="cpsc408",
             auth_plugin='msql_native_password',
             database="RideShare")
         self.cursor = self.connection.cursor()
