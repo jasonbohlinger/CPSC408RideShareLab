@@ -2,9 +2,31 @@ from helper import helper
 from db_operations import db_operations
 
 db_ops = db_operations() # Insert db file here
-#data = helper.data_cleaner() # Insert csv file here
+dataRiders = helper.data_cleaner('riders.csv')
+dataDrivers = helper.data_cleaner('drivers.csv')
+dataRides = helper.data_cleaner('rides.csv')
 
+def pre_process():
+    if is_empty():
+        print('Pre-process')
+        attribute_count_riders = len(dataRiders[0])
+        placeholders_riders = ("%s,"*attribute_count_riders)[:-1]
+        query = "INSERT INTO riders VALUES("+placeholders_riders+")"
+        db_ops.bulk_insert(query, dataRiders)
+
+        attribute_count_drivers= len(dataDrivers[0])
+        placeholders_drivers = ("%s,"*attribute_count_drivers)[:-1]
+        query = "INSERT INTO drivers VALUES("+placeholders_drivers+")"
+        db_ops.bulk_insert(query, dataDrivers)
+
+        attribute_count_rides = len(dataRides[0])
+        placeholders_rides = ("%s,"*attribute_count_rides)[:-1]
+        query = "INSERT INTO rides VALUES("+placeholders_rides+")"
+        db_ops.bulk_insert(query, dataRides)
+        print('Complete')
+# Start screen introduction and user log in logic contained in start screen
 def startScreen():
+    print()
     print('Welcome to RideShare.')
     print('''
     Are you a new user?
@@ -46,6 +68,7 @@ def startScreen():
     else:
         display_driver_options(userID)
 
+# handles logic for creating users
 def create_new_user():
     print('''
     Which type of profile would you like to create:
@@ -53,7 +76,10 @@ def create_new_user():
     2. Driver
     ''')
     profileType = helper.get_choice([1, 2])
+
+    #user is rider
     if (profileType == 1):
+        # enforces proper input for the id, catching invalid inputs
         while True:
             riderID = input('What is your new rider ID? (integer) \n')
             try:
@@ -62,11 +88,13 @@ def create_new_user():
                 print("Not an integer! Try again.")
                 continue
             else:
+                # ensures the id doesn't already exist in DB
                 if (riderID in get_riderIDs() or riderID in get_driverIDs()):
                     print("This ID number is already used by another user. Try again.")
                     continue
                 break
-
+        
+        #query to insert new id into riders table
         query = '''
         INSERT INTO riders VALUES (
             %s
@@ -75,8 +103,10 @@ def create_new_user():
         values = [riderID]
         db_ops.name_placeholder_query(query, values)
         db_ops.commit()
-        
+    
+    # user is driver
     else:
+        # enforces proper input for the id, catching invalid inputs
         while True:
             driverID = input('What is your new driver ID? (integer) \n')
             try:
@@ -85,10 +115,13 @@ def create_new_user():
                 print("Not an integer! Try again.")
                 continue
             else:
+                # ensures the id doesn't exist in DB
                 if (driverID in get_riderIDs() or driverID in get_driverIDs()):
                     print("This ID number is already used by another user. Try again.")
                     continue
                 break
+
+        # query to insert the new ID into DB, rating and isDriving set to zero and false
         query = '''
         INSERT INTO drivers VALUES(
             %s,
@@ -184,6 +217,7 @@ def getDriverRating(driverID):
 
 
 def rate_latest_driver(riderID):
+    #query to select last rideID
     query = '''
             SELECT MAX(rideID)
             FROM rides
@@ -195,6 +229,7 @@ def rate_latest_driver(riderID):
         return
 
     print('Latest_ride_id: ', latest_ride_id)
+
     while(True):
         query = '''
         SELECT *
@@ -209,6 +244,7 @@ def rate_latest_driver(riderID):
         2. No
         ''')
         user_choice = helper.get_choice([1, 2])
+
         if user_choice == 1:
             this_ride_driver_id = results[0][2]
             print('Driver ID: ', this_ride_driver_id)
@@ -286,8 +322,9 @@ def find_driver(riderID):
     db_ops.commit()
     print('Your new ride ID: ', new_ride_id)
 
-
+# returns the given drivers driver rating
 def get_driver_rating(driverID):
+    # while true loop enforces appropriate input from user
     while(True):
         query = '''
         SELECT rating
@@ -311,6 +348,7 @@ def get_driver_rating(driverID):
 
 # gets information of all rides given by particular dID
 def view_rides_rider(riderID):
+    #query to get all ride information from given riderID
     query = '''
     SELECT *
     FROM rides
@@ -318,13 +356,16 @@ def view_rides_rider(riderID):
     '''
     values = [riderID]
     results = db_ops.name_placeholder_query(query,values)
+
+    #output information to user
     if (len(results) == 0):
         print('No rides found for this user')
     else:
         helper.pretty_print_rides(results)
 
-
+# view_rides_driver returns a list of all the rides given depending on the driverID param that's passed to the function
 def view_rides_driver(driverID):
+    # query that gets everything from rides table where driverID is passed
     query = '''
     SELECT *
     FROM rides
@@ -347,6 +388,7 @@ def get_active_drivers():
 
     return db_ops.single_attribute(query)
 
+# update_driver_status updates driverID's isDriving flag
 def update_driver_status(driverID, newStatus):
     query = '''
         UPDATE drivers
@@ -357,33 +399,31 @@ def update_driver_status(driverID, newStatus):
     db_ops.name_placeholder_query(query, values)
     db_ops.commit()
 
+# queries the amount of tuples across all tables, will return true if ALL 3 tables are empty
 def is_empty():
-    num_empty = 0
+    # ride table count
     rideQuery = '''
     SELECT COUNT(*)
     FROM rides
     '''
-    num_empty += db_ops.single_record(rideQuery)
+    results_rides = db_ops.single_record(rideQuery)
     
+    # rider table count
     riderQuery = '''
     SELECT COUNT(*)
     FROM riders
     '''
-    num_empty += db_ops.single_record(riderQuery)
+    results_riders = db_ops.single_record(riderQuery)
 
+    # driver table count
     driversQuery = '''
     SELECT COUNT(*)
     FROM drivers
     '''
-    num_empty += db_ops.single_record(driversQuery)
+    results_drivers = db_ops.single_record(driversQuery)
 
-    return num_empty == 0
+    return ((results_rides == 0) & (results_riders == 0) & (results_drivers == 0))
 
-# def pre_process():
-#     if is_empty():
-#         attribute_count = len(data[0])
-#         placeholders = ("?,"*attribute_count)[:-1]
-#         query = "INSERT INTO 
-
+pre_process()
 startScreen()
     

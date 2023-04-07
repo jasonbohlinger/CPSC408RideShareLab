@@ -12,28 +12,6 @@ class db_operations():
             database="RideShare")
         self.cursor = self.connection.cursor()
 
-    #creates table songs in our database
-    def create_riders_table(self):
-        query = '''
-        
-        '''
-        self.cursor.execute(query)
-        print('Table Created')
-
-    def create_drivers_table(self):
-        query = '''
-        
-        '''
-        self.cursor.execute(query)
-        print('Table created')
-
-    def create_rides_table(self):
-        query = '''
-        
-        '''
-        self.cursor.execute(query)
-        print('Table created')
-
      # function to return a single value from table
     def single_record(self,query):
         self.cursor.execute(query)
