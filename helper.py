@@ -18,12 +18,14 @@ class helper():
     def data_cleaner(path):
         with open(path,"r",encoding="utf-8") as f:
             data = f.readlines()
-
         data = [i.strip().split(",") for i in data]
         data_cleaned = []
         for row in data[:]:
             row = [helper.convert(i) for i in row]
-            data_cleaned.append(tuple(row))
+            if (len(row) == 1):
+                data_cleaned.append(row)
+            else:
+                data_cleaned.append(tuple(row))
         return data_cleaned
 
     # function checks for user input given a list of choices
